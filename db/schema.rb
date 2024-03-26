@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_03_18_031030) do
+ActiveRecord::Schema[7.1].define(version: 2024_03_26_205410) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -24,7 +24,7 @@ ActiveRecord::Schema[7.1].define(version: 2024_03_18_031030) do
     t.string "calories"
     t.string "fats"
     t.string "carbs"
-    t.string "protiens"
+    t.string "proteins"
     t.string "fibers"
     t.string "sugars"
     t.datetime "created_at", null: false

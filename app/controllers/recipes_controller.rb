@@ -12,9 +12,11 @@ class RecipesController < ApplicationController
         if recipe.valid?
             render json: recipe, status: 200
         else 
+            puts recipe.errors.inspect # Log errors to console
             render json: recipe.errors, status: 422
         end
     end
+    
   
     def update
         recipe = Recipe.find(params[:id])
@@ -35,9 +37,10 @@ class RecipesController < ApplicationController
         end
     end
 
-    # Handle strong parameters
-    private
-    def recipe_params
-        params.require(:recipe).permit(:title, :subsitution, :ingredients, :servings, :instructions, :image, :cooktime, :fats, :calories, :protiens, :carbs, :sugars, :fibers)
-    end
+    
+private
+def recipe_params
+    params.require(:recipe).permit(:title, :ingredients, :servings, :instructions, :image, :cooktime, :preptime, :totaltime, :fats, :calories, :proteins, :carbs, :sugars, :fibers)
+end
+
 end
