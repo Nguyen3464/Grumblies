@@ -131,9 +131,8 @@ RSpec.describe "Recipes", type: :request do
     include Devise::Test::IntegrationHelpers 
   
     let(:user) { User.create(email: 'test@example.com', password: 'password', password_confirmation: 'password') }
-    
-    it "will delete a recipe" do
-      recipe = Recipe.create(
+    let(:recipe) do
+      Recipe.create(
         title: "Burger",
         ingredients: 'Beef, Bun, Lettuce, Tomato, Cheese',
         servings: '1',
@@ -148,27 +147,34 @@ RSpec.describe "Recipes", type: :request do
         carbs: '35g',
         sugars: '7g',
         fibers: '10g',
-        user_id: user.id  # Use the ID of the user you created
+        user_id: user.id
       )
-  
-      # Sign in the user before making the request
+    end
+    
+    before do
       sign_in user
-  
+    end
+    
+    it "will delete a recipe" do
       # Ensure that the recipe exists before attempting to delete it
+      expect(Recipe.find_by(id: recipe.id)).not_to be_nil
+    
       p "Before deletion: #{Recipe.find_by(id: recipe.id)}"
-      
+    
       delete "/recipes/#{recipe.id}"
-
-      
-  
+    
+      # Ensure that the response status is as expected
+      p "Response status: #{response.status}"
+      expect(response).to have_http_status(200), "Expected status 200 but got #{response.status}"
+    
       # Ensure that the recipe is deleted from the database
-      expect(response).to have_http_status(200) 
-      expect(Recipe.find_by(id: recipe.id)).to be_nil  # Ensure the recipe is deleted from the database
-  
-      # Debug output
+      expect(Recipe.find_by(id: recipe.id)).to be_nil
+    
       p "After deletion: #{Recipe.find_by(id: recipe.id)}"
     end
+    
   end
+  
   
   
   
