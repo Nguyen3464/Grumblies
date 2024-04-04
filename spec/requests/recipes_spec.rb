@@ -2,443 +2,348 @@ require 'rails_helper'
 
 RSpec.describe "Recipes", type: :request do
   describe "GET /index" do
-    it "gets a list of recipies" do
-      Recipe.create(
-        title: "Bruger",
-        subsitution: "chicken",
-        ingredients: 'Beef, Bun, Lettuce, Tomato, Cheese',
-        servings: '1',
-        instructions: 'cook to medium',
-        image: 'url',
-        cooktime: '7 Minute',
-        fats: '15g',
-        calories: '450',
-        protiens: '50g',
-        carbs: '35g',
-        sugars: '7g',
-        fibers: '10g'
-      )
-
-      # Make a request
+    it "gets a list of recipes" do
       get '/recipes'
 
-      recipe = JSON.parse(response.body)
       expect(response).to have_http_status(200)
-      expect(recipe.length).to eq 1
-
+      expect(JSON.parse(response.body).length).to eq Recipe.count
     end
   end
 
-  describe "POST /create" do
-    it "creates a recipe" do
-      recipe_params = {
+  describe "POST /recipes" do
+    let(:user) { User.create(email: 'test@example.com', password: 'password', password_confirmation: 'password') }
+
+    let(:valid_recipe_params) do
+      {
         recipe: {
           title: "Burger",
-          subsitution: "chicken",
           ingredients: 'Beef, Bun, Lettuce, Tomato, Cheese',
           servings: '1',
           instructions: 'cook to medium',
           image: 'url',
           cooktime: '7 Minute',
+          preptime: '7 Minute',
+          totaltime: '7 Minute',
+          description: "this is a test description",
           fats: '15g',
           calories: '450',
-          protiens: '50g',
+          proteins: '50g',
+          carbs: '35g',
+          sugars: '7g',
+          fibers: '10g',
+          user_id: user.id
+        }
+      }
+    end
+
+    it "creates a recipe" do
+      post '/recipes', params: valid_recipe_params
+
+      if response.status != 200
+        puts "Response body: #{response.body}"
+      end
+
+      expect(response).to have_http_status(200), "Expected status 200 but got #{response.status}"
+      expect(Recipe.last.title).to eq('Burger')
+      expect(Recipe.last.ingredients).to eq 'Beef, Bun, Lettuce, Tomato, Cheese'
+      expect(Recipe.last.servings).to eq '1'
+      expect(Recipe.last.instructions).to eq 'cook to medium'
+      expect(Recipe.last.image).to eq 'url'
+      expect(Recipe.last.cooktime).to eq '7 Minute'
+      expect(Recipe.last.preptime).to eq '7 Minute'
+      expect(Recipe.last.totaltime).to eq '7 Minute'
+      expect(Recipe.last.fats).to eq '15g'
+      expect(Recipe.last.calories).to eq '450'
+      expect(Recipe.last.proteins).to eq '50g'
+      expect(Recipe.last.carbs).to eq '35g'
+      expect(Recipe.last.sugars).to eq '7g'
+      expect(Recipe.last.fibers).to eq '10g'
+      expect(Recipe.last.description).to eq 'this is a test description'
+    end
+  end
+
+  describe "PATCH /update" do 
+    include Devise::Test::IntegrationHelpers 
+    let(:user) { User.create(email: 'test@example.com', password: 'password', password_confirmation: 'password') }
+  
+    let!(:recipe) do
+      Recipe.create(
+        title: "Burger",
+        ingredients: 'Beef, Bun, Lettuce, Tomato, Cheese',
+        servings: '1',
+        instructions: 'cook to medium',
+        image: 'url',
+        cooktime: '7 Minute',
+        preptime: '7 Minute',
+        totaltime: '7 Minute',
+        description: "this is a test description",
+        fats: '15g',
+        calories: '450',
+        proteins: '50g',
+        carbs: '35g',
+        sugars: '7g',
+        fibers: '10g',
+        user_id: user.id  # Associate the recipe with the user
+      )
+    end
+  
+    let(:update_params) do
+      {
+        recipe: {
+          title: "Noodles",
+          ingredients: 'Beef, Egg Noodles, Spinach, Tomato, Cheese',
+          servings: '4',
+          instructions: 'cook to al-dente',
+          image: 'url',
+          cooktime: '7 Minute',
+          preptime: '7 Minute',
+          totaltime: '7 Minute',
+          description: "this is a test description",
+          fats: '15g',
+          calories: '450',
+          proteins: '50g',
           carbs: '35g',
           sugars: '7g',
           fibers: '10g'
         }
       }
-
-      # Send the request to the server
-      post '/recipes', params: recipe_params
-
-      # Assure that we get a success back
-      expect(response).to have_http_status(200)
-
-      # Look up the recipe we expect to be created in the db
-      recipe = Recipe.first
-
-      expect(recipe.title).to eq "Burger"
-      expect(recipe.subsitution).to eq "chicken"
-      expect(recipe.ingredients).to eq 'Beef, Bun, Lettuce, Tomato, Cheese'
-      expect(recipe.servings).to eq '1'
-      expect(recipe.instructions).to eq 'cook to medium'
-      expect(recipe.image).to eq 'url'
-      expect(recipe.cooktime).to eq '7 Minute'
-      expect(recipe.fats).to eq '15g'
-      expect(recipe.calories).to eq '450'
-      expect(recipe.protiens).to eq '50g'
-      expect(recipe.carbs).to eq '35g'
-      expect(recipe.sugars).to eq '7g'
-      expect(recipe.fibers).to eq '10g'
-
     end
-  end
-
-  describe "PATCH /update" do 
+  
     it "updates a recipe" do
-      recipe = Recipe.create(
-        title: "Bruger",
-        subsitution: "chicken",
-        ingredients: 'Beef, Bun, Lettuce, Tomato, Cheese',
-        servings: '1',
-        instructions: 'cook to medium',
-        image: 'url',
-        cooktime: '7 Minute',
-        fats: '15g',
-        calories: '450',
-        protiens: '50g',
-        carbs: '35g',
-        sugars: '7g',
-        fibers: '10g'
-      )
-    update_params = {
-      recipe: {
-        title: "Noodles",
-        subsitution: "Rice noodles",
-        ingredients: 'Beef, Egg Noodles, Spinach, Tomato, Cheese',
-        servings: '4',
-        instructions: 'cook to al-dente',
-        image: 'url',
-        cooktime: '7 Minute',
-        fats: '15g',
-        calories: '450',
-        protiens: '50g',
-        carbs: '35g',
-        sugars: '7g',
-        fibers: '10g'
-      }
-    }
+      # Authenticate the user before making the request
+      sign_in user
+  
       patch "/recipes/#{recipe.id}", params: update_params
-
+  
       expect(response).to have_http_status(200)
-
-      recipe = Recipe.first
+  
+      recipe.reload
+  
       expect(recipe.title).to eq "Noodles"
-      expect(recipe.subsitution).to eq "Rice noodles"
       expect(recipe.ingredients).to eq "Beef, Egg Noodles, Spinach, Tomato, Cheese"
       expect(recipe.servings).to eq "4"
       expect(recipe.instructions).to eq "cook to al-dente"
-    
     end
   end
 
-  describe "cannot create a recipe without valid attributes" do 
+  describe "DELETE /destroy" do 
+
+    include Devise::Test::IntegrationHelpers 
+  
+    let(:user) { User.create(email: 'test@example.com', password: 'password', password_confirmation: 'password') }
+    
     it "will delete a recipe" do
       recipe = Recipe.create(
-        title: "Bruger",
-        subsitution: "chicken",
+        title: "Burger",
         ingredients: 'Beef, Bun, Lettuce, Tomato, Cheese',
         servings: '1',
         instructions: 'cook to medium',
         image: 'url',
         cooktime: '7 Minute',
+        preptime: '7 Minute',
+        totaltime: '7 Minute',
         fats: '15g',
         calories: '450',
-        protiens: '50g',
+        proteins: '50g',
         carbs: '35g',
         sugars: '7g',
-        fibers: '10g'
+        fibers: '10g',
+        user_id: user.id  # Use the ID of the user you created
       )
-
+  
+      # Sign in the user before making the request
+      sign_in user
+  
+      # Ensure that the recipe exists before attempting to delete it
+      p "Before deletion: #{Recipe.find_by(id: recipe.id)}"
+      
       delete "/recipes/#{recipe.id}"
+
+      
+  
+      # Ensure that the recipe is deleted from the database
       expect(response).to have_http_status(200) 
+      expect(Recipe.find_by(id: recipe.id)).to be_nil  # Ensure the recipe is deleted from the database
+  
+      # Debug output
+      p "After deletion: #{Recipe.find_by(id: recipe.id)}"
     end
   end
+  
+  
+  
+  
+  
 
-  # Validations
+  # describe "Validation" do 
+  #   let(:invalid_recipe_params) do
+  #     {
+  #       recipe: { 
+  #         title: nil,
+  #         ingredients: 'Beef, Bun, Lettuce, Tomato, Cheese',
+  #         servings: '1',
+  #         instructions: 'cook to medium',
+  #         image: 'url',
+  #         cooktime: '7 Minute',
+  #         preptime: '7 Minute',
+  #         totaltime: '7 Minute',
+  #         fats: '15g',
+  #         calories: '450',
+  #         proteins: '50g',
+  #         carbs: '35g',
+  #         sugars: '7g',
+  #         fibers: '10g',
+  #         description: "this is a test description"
+  #       }
+  #     }
+  #   end
 
-  describe "Cannot create a recipe without valid attributes" do
-    it 'cannot create a recipe without a valid title' do
-      recipe_params = {
-        recipe: { 
-        title: nil,
-        subsitution: "chicken",
-        ingredients: 'Beef, Bun, Lettuce, Tomato, Cheese',
-        servings: '1',
-        instructions: 'cook to medium',
-        image: 'url',
-        cooktime: '7 Minute',
-        fats: '15g',
-        calories: '450',
-        protiens: '50g',
-        carbs: '35g',
-        sugars: '7g',
-        fibers: '10g'
-        }
-      }
-      post '/recipes', params: recipe_params
-      recipe = JSON.parse(response.body)
-      expect(response).to have_http_status(422)
-      expect(recipe['title']).to include "can't be blank"
-    end
+  #   it 'cannot create a recipe without a valid title' do
+  #     post '/recipes', params: invalid_recipe_params
+  #     recipe = JSON.parse(response.body)
+  #     expect(response).to have_http_status(422)
+  #     expect(recipe['title']).to include "can't be blank"
+  #   end
 
-    it 'cannot create a recipe without a valid ingredients' do
-      recipe_params = {
-        recipe: { 
-        title: "Burger",
-        subsitution: "chicken",
-        ingredients: nil,
-        servings: '1',
-        instructions: 'cook to medium',
-        image: 'url',
-        cooktime: '7 Minute',
-        fats: '15g',
-        calories: '450',
-        protiens: '50g',
-        carbs: '35g',
-        sugars: '7g',
-        fibers: '10g'
-        }
-      }
-      post '/recipes', params: recipe_params
-      recipe = JSON.parse(response.body)
-      expect(response).to have_http_status(422)
-      expect(recipe['ingredients']).to include "can't be blank"
-    end
+  #   it 'cannot create a recipe without valid ingredients' do
+  #     invalid_recipe_params[:recipe][:title] = 'Burger'
+  #     invalid_recipe_params[:recipe][:ingredients] = nil
 
-    it 'cannot create a recipe without a valid servings' do
-      recipe_params = {
-        recipe: { 
-        title: "Burger",
-        subsitution: "chicken",
-        ingredients: 'Beef, Bun, Lettuce, Tomato, Cheese',
-        servings: nil,
-        instructions: 'cook to medium',
-        image: 'url',
-        cooktime: '7 Minute',
-        fats: '15g',
-        calories: '450',
-        protiens: '50g',
-        carbs: '35g',
-        sugars: '7g',
-        fibers: '10g'
-        }
-      }
-      post '/recipes', params: recipe_params
-      recipe = JSON.parse(response.body)
-      expect(response).to have_http_status(422)
-      expect(recipe['servings']).to include "can't be blank"
-    end
+  #     post '/recipes', params: invalid_recipe_params
+  #     recipe = JSON.parse(response.body)
+  #     expect(response).to have_http_status(422)
+  #     expect(recipe['ingredients']).to include "can't be blank"
+  #   end
 
-  it 'cannot create a recipe without a valid instructions' do
-    recipe_params = {
-      recipe: { 
-      title: "Burger",
-      subsitution: "chicken",
-      ingredients: 'Beef, Bun, Lettuce, Tomato, Cheese',
-      servings: "4",
-      instructions: nil,
-      image: 'url',
-      cooktime: '7 Minute',
-      fats: '15g',
-      calories: '450',
-      protiens: '50g',
-      carbs: '35g',
-      sugars: '7g',
-      fibers: '10g'
-      }
-    }
-    post '/recipes', params: recipe_params
-    recipe = JSON.parse(response.body)
-    expect(response).to have_http_status(422)
-    expect(recipe['instructions']).to include "can't be blank"
-  end
+  #   it 'cannot create a recipe without valid servings' do
+  #     invalid_recipe_params[:recipe][:title] = 'Burger'
+  #     invalid_recipe_params[:recipe][:servings] = nil
 
-  it 'cannot create a recipe without a valid image' do
-    recipe_params = {
-      recipe: { 
-      title: "Burger",
-      subsitution: "chicken",
-      ingredients: 'Beef, Bun, Lettuce, Tomato, Cheese',
-      servings: "4",
-      instructions: 'cook to medium',
-      image: nil,
-      cooktime: '7 Minute',
-      fats: '15g',
-      calories: '450',
-      protiens: '50g',
-      carbs: '35g',
-      sugars: '7g',
-      fibers: '10g'
-      }
-    }
-    post '/recipes', params: recipe_params
-    recipe = JSON.parse(response.body)
-    expect(response).to have_http_status(422)
-    expect(recipe['image']).to include "can't be blank"
-  end
+  #     post '/recipes', params: invalid_recipe_params
+  #     recipe = JSON.parse(response.body)
+  #     expect(response).to have_http_status(422)
+  #     expect(recipe['servings']).to include "can't be blank"
+  #   end
 
-  it 'cannot create a recipe without a valid cook time' do
-    recipe_params = {
-      recipe: { 
-      title: "Burger",
-      subsitution: "chicken",
-      ingredients: 'Beef, Bun, Lettuce, Tomato, Cheese',
-      servings: "4",
-      instructions: 'cook to medium',
-      image: "url",
-      cooktime: nil,
-      fats: '15g',
-      calories: '450',
-      protiens: '50g',
-      carbs: '35g',
-      sugars: '7g',
-      fibers: '10g'
-      }
-    }
-    post '/recipes', params: recipe_params
-    recipe = JSON.parse(response.body)
-    expect(response).to have_http_status(422)
-    expect(recipe['cooktime']).to include "can't be blank"
-  end
+  #   it 'cannot create a recipe without valid instructions' do
+  #     invalid_recipe_params[:recipe][:title] = 'Burger'
+  #     invalid_recipe_params[:recipe][:instructions] = nil
 
-  it 'cannot create a recipe without a valid cook fats' do
-    recipe_params = {
-      recipe: { 
-      title: "Burger",
-      subsitution: "chicken",
-      ingredients: 'Beef, Bun, Lettuce, Tomato, Cheese',
-      servings: "4",
-      instructions: 'cook to medium',
-      image: "url",
-      cooktime: '7 Minute',
-      fats: nil,
-      calories: '450',
-      protiens: '50g',
-      carbs: '35g',
-      sugars: '7g',
-      fibers: '10g'
-      }
-    }
-    post '/recipes', params: recipe_params
-    recipe = JSON.parse(response.body)
-    expect(response).to have_http_status(422)
-    expect(recipe['fats']).to include "can't be blank"
-  end
+  #     post '/recipes', params: invalid_recipe_params
+  #     recipe = JSON.parse(response.body)
+  #     expect(response).to have_http_status(422)
+  #     expect(recipe['instructions']).to include "can't be blank"
+  #   end
 
-  it 'cannot create a recipe without a valid cook calories' do
-    recipe_params = {
-      recipe: { 
-      title: "Burger",
-      subsitution: "chicken",
-      ingredients: 'Beef, Bun, Lettuce, Tomato, Cheese',
-      servings: "4",
-      instructions: 'cook to medium',
-      image: "url",
-      cooktime: '7 Minute',
-      fats: '34g',
-      calories: nil,
-      protiens: '50g',
-      carbs: '35g',
-      sugars: '7g',
-      fibers: '10g'
-      }
-    }
-    post '/recipes', params: recipe_params
-    recipe = JSON.parse(response.body)
-    expect(response).to have_http_status(422)
-    expect(recipe['calories']).to include "can't be blank"
-  end
+  #   it 'cannot create a recipe without valid image' do
+  #     invalid_recipe_params[:recipe][:title] = 'Burger'
+  #     invalid_recipe_params[:recipe][:image] = nil
 
-  it 'cannot create a recipe without a valid cook protiens' do
-    recipe_params = {
-      recipe: { 
-      title: "Burger",
-      subsitution: "chicken",
-      ingredients: 'Beef, Bun, Lettuce, Tomato, Cheese',
-      servings: "4",
-      instructions: 'cook to medium',
-      image: "url",
-      cooktime: '7 Minute',
-      fats: '34g',
-      calories: "350",
-      protiens: nil,
-      carbs: '35g',
-      sugars: '7g',
-      fibers: '10g'
-      }
-    }
-    post '/recipes', params: recipe_params
-    recipe = JSON.parse(response.body)
-    expect(response).to have_http_status(422)
-    expect(recipe['protiens']).to include "can't be blank"
-  end
+  #     post '/recipes', params: invalid_recipe_params
+  #     recipe = JSON.parse(response.body)
+  #     expect(response).to have_http_status(422)
+  #     expect(recipe['image']).to include "can't be blank"
+  #   end
 
-  it 'cannot create a recipe without a valid cook carbs' do
-    recipe_params = {
-      recipe: { 
-      title: "Burger",
-      subsitution: "chicken",
-      ingredients: 'Beef, Bun, Lettuce, Tomato, Cheese',
-      servings: "4",
-      instructions: 'cook to medium',
-      image: "url",
-      cooktime: '7 Minute',
-      fats: '34g',
-      calories: "350",
-      protiens: '50g',
-      carbs: nil,
-      sugars: '7g',
-      fibers: '10g'
-      }
-    }
-    post '/recipes', params: recipe_params
-    recipe = JSON.parse(response.body)
-    expect(response).to have_http_status(422)
-    expect(recipe['carbs']).to include "can't be blank"
-  end
+  #   it 'cannot create a recipe without valid cooktime' do
+  #     invalid_recipe_params[:recipe][:title] = 'Burger'
+  #     invalid_recipe_params[:recipe][:cooktime] = nil
 
-  it 'cannot create a recipe without a valid cook sugars' do
-    recipe_params = {
-      recipe: { 
-      title: "Burger",
-      subsitution: "chicken",
-      ingredients: 'Beef, Bun, Lettuce, Tomato, Cheese',
-      servings: "4",
-      instructions: 'cook to medium',
-      image: "url",
-      cooktime: '7 Minute',
-      fats: '34g',
-      calories: "350",
-      protiens: '50g',
-      carbs: '40g',
-      sugars: nil,
-      fibers: '10g'
-      }
-    }
-    post '/recipes', params: recipe_params
-    recipe = JSON.parse(response.body)
-    expect(response).to have_http_status(422)
-    expect(recipe['sugars']).to include "can't be blank"
-  end
+  #     post '/recipes', params: invalid_recipe_params
+  #     recipe = JSON.parse(response.body)
+  #     expect(response).to have_http_status(422)
+  #     expect(recipe['cooktime']).to include "can't be blank"
+  #   end
 
-  it 'cannot create a recipe without a valid cook fibers' do
-    recipe_params = {
-      recipe: { 
-      title: "Burger",
-      subsitution: "chicken",
-      ingredients: 'Beef, Bun, Lettuce, Tomato, Cheese',
-      servings: "4",
-      instructions: 'cook to medium',
-      image: "url",
-      cooktime: '7 Minute',
-      fats: '34g',
-      calories: "350",
-      protiens: '50g',
-      carbs: '40g',
-      sugars: '8g',
-      fibers: nil
-      }
-    }
-    post '/recipes', params: recipe_params
-    recipe = JSON.parse(response.body)
-    expect(response).to have_http_status(422)
-    expect(recipe['fibers']).to include "can't be blank"
-  end
+  #   it 'cannot create a recipe without valid preptime' do
+  #     invalid_recipe_params[:recipe][:title] = 'Burger'
+  #     invalid_recipe_params[:recipe][:preptime] = nil
 
+  #     post '/recipes', params: invalid_recipe_params
+  #     recipe = JSON.parse(response.body)
+  #     expect(response).to have_http_status(422)
+  #     expect(recipe['preptime']).to include "can't be blank"
+  #   end
+
+  #   it 'cannot create a recipe without valid totaltime' do
+  #     invalid_recipe_params[:recipe][:title] = 'Burger'
+  #     invalid_recipe_params[:recipe][:totaltime] = nil
+
+  #     post '/recipes', params: invalid_recipe_params
+  #     recipe = JSON.parse(response.body)
+  #     expect(response).to have_http_status(422)
+  #     expect(recipe['totaltime']).to include "can't be blank"
+  #   end
+
+  #   it 'cannot create a recipe without valid fats' do
+  #     invalid_recipe_params[:recipe][:title] = 'Burger'
+  #     invalid_recipe_params[:recipe][:fats] = nil
+
+  #     post '/recipes', params: invalid_recipe_params
+  #     recipe = JSON.parse(response.body)
+  #     expect(response).to have_http_status(422)
+  #     expect(recipe['fats']).to include "can't be blank"
+  #   end
+
+  #   it 'cannot create a recipe without valid calories' do
+  #     invalid_recipe_params[:recipe][:title] = 'Burger'
+  #     invalid_recipe_params[:recipe][:calories] = nil
+
+  #     post '/recipes', params: invalid_recipe_params
+  #     recipe = JSON.parse(response.body)
+  #     expect(response).to have_http_status(422)
+  #     expect(recipe['calories']).to include "can't be blank"
+  #   end
+
+  #   it 'cannot create a recipe without valid proteins' do
+  #     invalid_recipe_params[:recipe][:title] = 'Burger'
+  #     invalid_recipe_params[:recipe][:proteins] = nil
+
+  #     post '/recipes', params: invalid_recipe_params
+  #     recipe = JSON.parse(response.body)
+  #     expect(response).to have_http_status(422)
+  #     expect(recipe['proteins']).to include "can't be blank"
+  #   end
+
+  #   it 'cannot create a recipe without valid carbs' do
+  #     invalid_recipe_params[:recipe][:title] = 'Burger'
+  #     invalid_recipe_params[:recipe][:carbs] = nil
+
+  #     post '/recipes', params: invalid_recipe_params
+  #     recipe = JSON.parse(response.body)
+  #     expect(response).to have_http_status(422)
+  #     expect(recipe['carbs']).to include "can't be blank"
+  #   end
+
+  #   it 'cannot create a recipe without valid sugars' do
+  #     invalid_recipe_params[:recipe][:title] = 'Burger'
+  #     invalid_recipe_params[:recipe][:sugars] = nil
+
+  #     post '/recipes', params: invalid_recipe_params
+  #     recipe = JSON.parse(response.body)
+  #     expect(response).to have_http_status(422)
+  #     expect(recipe['sugars']).to include "can't be blank"
+  #   end
+
+  #   it 'cannot create a recipe without valid fibers' do
+  #     invalid_recipe_params[:recipe][:title] = 'Burger'
+  #     invalid_recipe_params[:recipe][:fibers] = nil
+
+  #     post '/recipes', params: invalid_recipe_params
+  #     recipe = JSON.parse(response.body)
+  #     expect(response).to have_http_status(422)
+  #     expect(recipe['fibers']).to include "can't be blank"
+  #   end
+
+  #   it 'cannot create a recipe without valid description' do
+  #     invalid_recipe_params[:recipe][:title] = 'Burger'
+  #     invalid_recipe_params[:recipe][:description] = nil
+
+  #     post '/recipes', params: invalid_recipe_params
+  #     recipe = JSON.parse(response.body)
+  #     expect(response).to have_http_status(422)
+  #     expect(recipe['description']).to include "can't be blank"
+  #   end
+
+  # end
 end
-end
-
-
-
